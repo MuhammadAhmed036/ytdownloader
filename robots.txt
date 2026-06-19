@@ -1,0 +1,5 @@
+# robots.txt
+# Disallow all web crawlers from indexing any content
+
+User-agent: *
+Disallow: /
