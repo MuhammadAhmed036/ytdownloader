@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ApiError, getReadyDownloadFile } from "@/lib/vda";
+import { ApiError, getReadyProviderUrl } from "@/lib/vda";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,29 +24,11 @@ function errorResponse(error: unknown) {
   );
 }
 
-function encodeContentDispositionFilename(filename: string): string {
-  const fallback = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
-  return `attachment; filename="${fallback}"; filename*=UTF-8''${encodeURIComponent(filename)}`;
-}
-
 export async function GET(_request: Request, context: RouteContext) {
   try {
     const { jobId } = await context.params;
-    const file = await getReadyDownloadFile(decodeURIComponent(jobId));
-    const headers = new Headers({
-      "Cache-Control": "no-store",
-      "Content-Type": file.contentType,
-      "Content-Disposition": encodeContentDispositionFilename(file.filename),
-    });
-
-    if (file.contentLength) {
-      headers.set("Content-Length", file.contentLength);
-    }
-
-    return new NextResponse(file.body, {
-      status: 200,
-      headers,
-    });
+    const providerUrl = await getReadyProviderUrl(decodeURIComponent(jobId));
+    return NextResponse.redirect(providerUrl, 302);
   } catch (error) {
     return errorResponse(error);
   }

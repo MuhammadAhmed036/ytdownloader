@@ -347,12 +347,7 @@ export async function getDownloadJob(jobId: string): Promise<DownloadStatusRespo
   }
 }
 
-export async function getReadyDownloadFile(jobId: string): Promise<{
-  body: ReadableStream<Uint8Array>;
-  contentType: string;
-  contentLength: string | null;
-  filename: string;
-}> {
+export async function getReadyProviderUrl(jobId: string): Promise<string> {
   const token = decodeJobToken(jobId);
 
   if (!token) {
@@ -366,23 +361,5 @@ export async function getReadyDownloadFile(jobId: string): Promise<{
     throw new ApiError(409, "DOWNLOAD_NOT_READY", "The file is still being prepared. Please wait and try again.");
   }
 
-  const response = await fetch(providerDownloadUrl, {
-    method: "GET",
-    headers: {
-      "User-Agent": "Mozilla/5.0 VDA Downloader",
-    },
-    cache: "no-store",
-    redirect: "follow",
-  });
-
-  if (!response.ok || !response.body) {
-    throw new ApiError(502, "FILE_FETCH_FAILED", `Provider file download failed. HTTP=${response.status}`);
-  }
-
-  return {
-    body: response.body,
-    contentType: response.headers.get("content-type") || (AUDIO_FORMATS.has(token.format) ? "audio/mpeg" : "video/mp4"),
-    contentLength: response.headers.get("content-length"),
-    filename: `${sanitizeFilename(token.title)}_${token.format}.${getOutputExtension(token.format)}`,
-  };
+  return providerDownloadUrl;
 }
